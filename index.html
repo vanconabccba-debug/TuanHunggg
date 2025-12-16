@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Santa Ẩn Danh 🎁</title>
+  <style>
+    :root{
+      --bg1:#0b1f1a; --bg2:#0a1630;
+      --card: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --accent: #ffdd57;
+      --good:#6ee7b7;
+      --bad:#fb7185;
+      --btn:#ffffff;
+      --btnText:#0b1f1a;
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 600px at 20% 10%, rgba(255,221,87,.22), transparent 55%),
+        radial-gradient(700px 500px at 90% 30%, rgba(110,231,183,.18), transparent 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100svh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:min(980px,100%); display:grid; gap:16px}
+    header{
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      padding:16px 18px; border:1px solid var(--stroke); border-radius:var(--radius);
+      background:var(--card); backdrop-filter: blur(10px);
+    }
+    header h1{margin:0; font-size:18px; letter-spacing:.2px}
+    header .tag{font-size:12px; color:var(--muted)}
+    .grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:16px}
+    @media (max-width: 880px){ .grid{grid-template-columns:1fr} }
+    .card{
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      background:var(--card);
+      backdrop-filter: blur(10px);
+      padding:16px;
+    }
+    .card h2{margin:0 0 10px; font-size:15px}
+    .muted{color:var(--muted); font-size:13px; line-height:1.4}
+    label{font-size:13px; color:var(--muted); display:block; margin:10px 0 6px}
+    input, textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.20);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      outline:none;
+    }
+    textarea{min-height:88px; resize:vertical}
+    .row{display:flex; gap:10px; align-items:center}
+    .row > *{flex:1}
+    .btn{
+      border:0;
+      border-radius:14px;
+      padding:10px 12px;
+      background:var(--btn);
+      color:var(--btnText);
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .05s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: transparent;
+      color: var(--text);
+      border:1px solid rgba(255,255,255,.22);
+      font-weight:700;
+    }
+    .btn.danger{
+      background: rgba(251,113,133,.18);
+      color: #ffe7ea;
+      border:1px solid rgba(251,113,133,.35);
+    }
+    .list{display:grid; gap:10px; margin-top:12px}
+    .item{
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      padding:10px 12px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      align-items:flex-start;
+      background: rgba(0,0,0,.12);
+    }
+    .item strong{display:block}
+    .item .note{color:var(--muted); font-size:12px; margin-top:2px; white-space:pre-wrap}
+    .pill{
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--muted);
+    }
+    .hr{height:1px; background:rgba(255,255,255,.12); margin:12px 0}
+    .links{display:grid; gap:10px; margin-top:10px}
+    .linkRow{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:start;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.12);
+    }
+    .linkRow .small{color:var(--muted); font-size:12px; margin-top:2px}
+    .toast{
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.65);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease;
+      backdrop-filter: blur(10px);
+    }
+    .toast.show{opacity:1}
+    .revealBox{
+      border:1px dashed rgba(255,255,255,.28);
+      border-radius:16px;
+      padding:12px;
+      background: rgba(0,0,0,.12);
+    }
+    .big{font-size:20px; margin:8px 0 6px}
+    .ok{color:var(--good); font-weight:800}
+    .err{color:var(--bad); font-weight:800}
+    footer{color:var(--muted); font-size:12px; text-align:center}
+    a{color:var(--accent)}
+    code{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🎄 Secret Santa Ẩn Danh — Tặng quà Giáng Sinh</h1>
+        <div class="tag">Tạo link riêng cho từng người • Không lộ danh sách toàn bộ</div>
+      </div>
+      <div class="pill" id="modePill">Chế độ: Tạo bốc thăm</div>
+    </header>
+
+    <div class="grid">
+      <!-- SETUP -->
+      <section class="card" id="setupCard">
+        <h2>1) Nhập người tham gia</h2>
+        <div class="muted">Mỗi người có <b>Tên</b> và <b>Ghi chú quà</b> (wishlist/ý thích/màu/size/…)</div>
+
+        <div class="row">
+          <div>
+            <label for="name">Tên</label>
+            <input id="name" placeholder="Ví dụ: Tuấn Hùng" />
+          </div>
+          <div>
+            <label for="short">Gợi ý nhanh</label>
+            <input id="short" placeholder="Ví dụ: Thích màu đen / ngân sách 200k" />
+          </div>
+        </div>
+
+        <label for="note">Ghi chú quà (chi tiết)</label>
+        <textarea id="note" placeholder="Ví dụ: Thích đồ công nghệ nhỏ, sách self-help, không ăn cay..."></textarea>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="addBtn">➕ Thêm người</button>
+          <button class="btn secondary" id="clearBtn">🧹 Xóa danh sách</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div class="muted">
+            <b id="count">0</b> người tham gia. (Cần tối thiểu <b>2</b> người)
+          </div>
+          <button class="btn" id="drawBtn">🎲 Bốc thăm</button>
+        </div>
+
+        <div class="list" id="peopleList"></div>
+      </section>
+
+      <!-- RESULTS / REVEAL -->
+      <section class="card" id="rightCard">
+        <h2 id="rightTitle">2) Link ẩn danh (gửi cho từng người)</h2>
+        <div class="muted" id="rightDesc">
+          Sau khi bốc thăm, bạn sẽ có danh sách link — copy và gửi đúng người tương ứng.
+        </div>
+
+        <div id="resultsArea" style="display:none">
+          <div class="revealBox">
+            <div class="muted">Mẹo: Mỗi link chỉ chứa đúng “một kèo” (người đó tặng ai + ghi chú người nhận).</div>
+          </div>
+          <div class="links" id="links"></div>
+
+          <div class="hr"></div>
+          <div class="row">
+            <button class="btn secondary" id="copyAllBtn">📋 Copy toàn bộ (dán ra Zalo/Sheet)</button>
+            <button class="btn danger" id="newDrawBtn">🔁 Bốc lại</button>
+          </div>
+        </div>
+
+        <div id="revealArea" style="display:none">
+          <div class="revealBox" id="revealBox"></div>
+          <div class="hr"></div>
+          <button class="btn secondary" id="backBtn">⬅️ Quay về tạo bốc thăm</button>
+          <div class="muted" style="margin-top:8px">
+            Nếu bạn nhận được link sai người, hãy báo người tổ chức gửi lại link đúng.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Làm nhanh để dùng ngay • Có thể up lên GitHub Pages / Netlify (chỉ 1 file <code>index.html</code>)
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">Đã copy ✅</div>
+
+<script>
+/** --------- Helpers --------- **/
+const $ = (sel) => document.querySelector(sel);
+
+function toast(msg="Đã copy ✅"){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 900);
+}
+
+function safeText(s){ return (s ?? "").toString().trim(); }
+
+function base64urlEncode(str){
+  const utf8 = new TextEncoder().encode(str);
+  let bin = "";
+  utf8.forEach(b => bin += String.fromCharCode(b));
+  const b64 = btoa(bin);
+  return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function base64urlDecode(b64url){
+  let b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+  while (b64.length % 4) b64 += '=';
+  const bin = atob(b64);
+  const bytes = new Uint8Array([...bin].map(ch => ch.charCodeAt(0)));
+  return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Sattolo's algorithm: tạo 1 chu trình (derangement) => KHÔNG ai bốc trúng chính mình
+ * Điều kiện: n >= 2
+ */
+function sattoloCycle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * i); // j < i
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildLink(payloadObj){
+  const json = JSON.stringify(payloadObj);
+  const enc = base64urlEncode(json);
+  // dùng hash để dữ liệu không “gửi lên server”
+  return `${location.origin}${location.pathname}#gift=${enc}`;
+}
+
+function renderPeople(){
+  const list = $("#peopleList");
+  list.innerHTML = "";
+  people.forEach((p, idx) => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div>
+        <strong>${p.name}</strong>
+        <div class="note">${p.note || "<i>(chưa có ghi chú)</i>"}</div>
+      </div>
+      <button class="btn danger" data-del="${idx}" title="Xóa">✕</button>
+    `;
+    list.appendChild(div);
+  });
+
+  $("#count").textContent = people.length;
+
+  list.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.getAttribute("data-del"));
+      people.splice(i,1);
+      renderPeople();
+    });
+  });
+}
+
+/** --------- State --------- **/
+let people = [];
+
+/** --------- Setup mode actions --------- **/
+$("#addBtn").addEventListener("click", () => {
+  const name = safeText($("#name").value);
+  const short = safeText($("#short").value);
+  const note = safeText($("#note").value);
+  if (!name){
+    toast("Nhập Tên trước nha 🙂");
+    $("#name").focus();
+    return;
+  }
+  const fullNote = [short, note].filter(Boolean).join("\n");
+  people.push({ name, note: fullNote });
+  $("#name").value = "";
+  $("#short").value = "";
+  $("#note").value = "";
+  renderPeople();
+  $("#name").focus();
+});
+
+$("#clearBtn").addEventListener("click", () => {
+  people = [];
+  renderPeople();
+  $("#resultsArea").style.display = "none";
+});
+
+$("#drawBtn").addEventListener("click", () => {
+  if (people.length < 2){
+    toast("Cần ít nhất 2 người để bốc thăm 🎁");
+    return;
+  }
+
+  // tạo danh sách người nhận bằng chu trình Sattolo (không ai nhận chính mình)
+  const receivers = sattoloCycle(people);
+
+  const linksEl = $("#links");
+  linksEl.innerHTML = "";
+
+  const allLines = [];
+  people.forEach((giver, idx) => {
+    const receiver = receivers[idx];
+
+    const payload = {
+      giver: giver.name,
+      receiver: receiver.name,
+      receiverNote: receiver.note || "",
+      createdAt: new Date().toISOString(),
+      title: "Secret Santa 🎄"
+    };
+
+    const link = buildLink(payload);
+
+    allLines.push(`${giver.name} => ${link}`);
+
+    const row = document.createElement("div");
+    row.className = "linkRow";
+    row.innerHTML = `
+      <div>
+        <div><b>${giver.name}</b></div>
+        <div class="small">Gửi cho ${giver.name} link này (mở ra sẽ biết cần tặng ai).</div>
+        <div class="small" style="word-break:break-all; margin-top:6px">${link}</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-direction:column">
+        <button class="btn" data-copy="${idx}">Copy link</button>
+        <button class="btn secondary" data-open="${idx}">Mở thử</button>
+      </div>
+    `;
+    linksEl.appendChild(row);
+
+    row.querySelector(`[data-copy="${idx}"]`).addEventListener("click", async () => {
+      await navigator.clipboard.writeText(link);
+      toast("Đã copy link ✅");
+    });
+
+    row.querySelector(`[data-open="${idx}"]`).addEventListener("click", () => {
+      window.open(link, "_blank");
+    });
+  });
+
+  $("#copyAllBtn").onclick = async () => {
+    await navigator.clipboard.writeText(allLines.join("\n"));
+    toast("Đã copy toàn bộ ✅");
+  };
+
+  $("#newDrawBtn").onclick = () => {
+    $("#resultsArea").style.display = "none";
+    toast("Ok, bấm 🎲 Bốc thăm để tạo lượt mới");
+  };
+
+  $("#resultsArea").style.display = "block";
+  toast("Bốc thăm xong! Tạo link thành công 🎉");
+});
+
+/** --------- Reveal mode --------- **/
+function showReveal(payload){
+  $("#modePill").textContent = "Chế độ: Mở link nhận kèo";
+  $("#setupCard").style.display = "none";
+  $("#resultsArea").style.display = "none";
+
+  $("#rightTitle").textContent = "🎁 Kèo của bạn";
+  $("#rightDesc").textContent = "Bạn chỉ thấy người bạn cần tặng + ghi chú của người nhận. Danh sách toàn bộ không bị lộ.";
+
+  $("#revealArea").style.display = "block";
+
+  const giver = payload.giver || "(Không rõ)";
+  const receiver = payload.receiver || "(Không rõ)";
+  const note = (payload.receiverNote || "").trim();
+
+  $("#revealBox").innerHTML = `
+    <div class="muted">Xin chào <b>${giver}</b> 👋</div>
+    <div class="big">Bạn sẽ tặng quà cho: <span class="ok">${receiver}</span> 🎄</div>
+    <div class="muted">Ghi chú quà của ${receiver}:</div>
+    <div style="margin-top:8px; white-space:pre-wrap; line-height:1.45">
+      ${note ? note : "<i class='muted'>(Không có ghi chú)</i>"}
+    </div>
+  `;
+
+  $("#backBtn").onclick = () => {
+    // xóa hash để quay về chế độ tạo
+    history.pushState("", document.title, location.pathname + location.search);
+    location.reload();
+  };
+}
+
+function showBrokenLink(){
+  $("#modePill").textContent = "Chế độ: Lỗi link";
+  $("#setupCard").style.display = "none";
+  $("#resultsArea").style.display = "none";
+
+  $("#rightTitle").textContent = "❌ Link không hợp lệ";
+  $("#rightDesc").textContent = "Link có thể bị cắt mất phần cuối hoặc copy thiếu. Hãy xin lại link từ người tổ chức.";
+  $("#revealArea").style.display = "block";
+  $("#revealBox").innerHTML = `<div class="err">Không đọc được dữ liệu trong link.</div>`;
+  $("#backBtn").onclick = () => {
+    history.pushState("", document.title, location.pathname + location.search);
+    location.reload();
+  };
+}
+
+/** --------- Bootstrap --------- **/
+(function init(){
+  renderPeople();
+
+  const hash = location.hash || "";
+  const m = hash.match(/#gift=([A-Za-z0-9\-_]+)/);
+  if (m){
+    $("#modePill").textContent = "Chế độ: Mở link nhận kèo";
+    try{
+      const json = base64urlDecode(m[1]);
+      const payload = JSON.parse(json);
+      showReveal(payload);
+    }catch(e){
+      showBrokenLink();
+    }
+  } else {
+    $("#modePill").textContent = "Chế độ: Tạo bốc thăm";
+    $("#revealArea").style.display = "none";
+  }
+})();
+</script>
+</body>
+</html>
